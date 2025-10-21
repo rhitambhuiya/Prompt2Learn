@@ -102,9 +102,9 @@ app.post('/api/courses/generate', async (req, res) => {
 
   try {
     const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const systemPrompt = `You are Prompt2Learn, an expert course designer. Create a concise 7-day study plan with a compelling courseTitle. For each day 1..7, include a dayTitle and 3-5 short lessons with title and 1-2 sentence description. Return ONLY valid JSON following this schema: {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, "lessons": [{"title": string, "description": string}]}]}. Keep it actionable, no markdown.`;
+    const systemPrompt = `You are Prompt2Learn, an expert course designer. Create a detailed 7-day study plan with a compelling courseTitle. For each day 1..7, include a dayTitle and 3-5 short lessons with title and detailed description. Return ONLY valid JSON following this schema: {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, "lessons": [{"title": string, "description": string}]}]}. Keep it actionable, no markdown.`;
 
     const result = await model.generateContent([
       { text: systemPrompt },
