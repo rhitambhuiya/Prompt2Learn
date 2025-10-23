@@ -102,7 +102,7 @@ app.post('/api/courses/generate', async (req, res) => {
 
   try {
     const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
     const systemPrompt = `You are Prompt2Learn, an expert course designer. Create a detailed 7-day study plan with a compelling courseTitle. For each day 1..7, include a dayTitle and 3-5 short lessons with title and detailed description. Return ONLY valid JSON following this schema: {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, "lessons": [{"title": string, "description": string}]}]}. Keep it actionable, no markdown.`;
 
@@ -161,6 +161,42 @@ app.get('/api/courses', (req, res) => {
   if (!userId) return res.status(400).json({ error: 'userId query required' });
   const rows = db.prepare('SELECT id, title, prompt, created_at FROM courses WHERE user_id = ? ORDER BY created_at DESC').all(userId);
   return res.json(rows);
+});
+
+app.delete('/api/courses/:courseId', (req, res) => {
+  try {
+    const courseId = parseInt(req.params.courseId, 10);
+    if (isNaN(courseId)) {
+      return res.status(400).json({ success: false, message: 'Invalid course ID format' });
+    }
+
+    // --- START OF FIX: Delete dependent records first ---
+
+    // 1. Delete from the 'lessons' table (assuming this is the dependent table)
+    db.prepare('DELETE FROM lessons WHERE course_id = ?').run(courseId);
+
+    // 2. Delete from any other dependent tables (e.g., 'enrollments')
+    // db.prepare('DELETE FROM enrollments WHERE course_id = ?').run(courseId);
+
+    // --- END OF FIX ---
+    
+    // Now, delete the course itself
+    const deleteCourse = db.prepare('DELETE FROM courses WHERE id = ?');
+    const result = deleteCourse.run(courseId);
+
+    if (result.changes > 0) {
+      res.json({ success: true, message: 'Course and all related data deleted successfully' });
+    } else {
+      res.status(404).json({ success: false, message: 'Course not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    // If the error code is known, you can return a more specific 409 Conflict
+    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        return res.status(409).json({ success: false, message: 'Cannot delete course due to existing dependencies.' });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // Get course with lessons

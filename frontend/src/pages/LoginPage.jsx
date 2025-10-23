@@ -405,7 +405,7 @@ export default function LoginPage() {
                         Prompt2Learn: Learn <AnimatedText />
                     </h1>
                     <p style={{fontSize: '24px', color: '#A0A0A0', maxWidth: '800px', margin: '0 auto'}}>
-                        Generate custom, AI-powered 7-day learning paths on any topic, designed just for you.
+                        Generate custom, AI-powered learning paths on any topic, designed just for you.
                     </p>
                     <button 
                         onClick={() => setShowModal(true)} 
@@ -430,17 +430,18 @@ export default function LoginPage() {
                         icon={<Zap size={32} color="#fcd34d" />} 
                         title="Instant Course Generation"
                         color="#fcd34d"
-                        description="Get a comprehensive, structured 7-day plan in seconds using the latest generative AI."
+                        description="Get a comprehensive, structured day-wise plan in seconds using the latest generative AI."
                     />
                     <FeatureCard
-                        icon={<Clock size={32} color={sageGreen.primary} />} 
+                        icon={<Clock size={32} color="#00FFFF" />} 
                         title="Personalized Time Modules"
-                        color={sageGreen.primary} 
+                        color="#00FFFF" 
                         description="Each path is broken down into manageable daily lessons tailored to your learning pace."
                     />
                     <FeatureCard
-                        icon={<TrendingUp size={32} color={sageGreen.primary} />} 
+                        icon={<TrendingUp size={32} color="#C9A9A6" />} 
                         title="Progress Tracking"
+                        color="#C9A9A6"
                         description="Monitor your progress and revisit completed lessons to reinforce your knowledge and skills."
                     />
                 </section>
