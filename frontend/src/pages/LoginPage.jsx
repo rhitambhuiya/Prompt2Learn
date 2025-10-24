@@ -168,42 +168,43 @@ const AppHeader = ({ onTryOut }) => (
 
 // Component for the dynamic text animation (FIXED)
 const AnimatedText = () => {
-    const phrases = ["better", "faster", "smarter"];
-    const [index, setIndex] = useState(0);
-    const [opacity, setOpacity] = useState(1);
-    const currentPhrase = phrases[index];
+    const phrases = ["better", "faster", "smarter"];
+    const [index, setIndex] = useState(0);
+    const [opacity, setOpacity] = useState(1);
+    const currentPhrase = phrases[index];
 
-    useEffect(() => {
-        // 1. Show phrase for 2.5s
-        const show = setTimeout(() => {
-            // 2. Start fade out
-            setOpacity(0);
-        }, 2500); 
+    useEffect(() => {
+        // 1. Show phrase for 1.5s (was 2.5s)
+        const show = setTimeout(() => {
+            // 2. Start fade out
+            setOpacity(0);
+        }, 1500); // Reduced time the phrase is fully visible
 
-        // 3. After fade out (0.5s later), change index and fade in
-        const change = setTimeout(() => {
-            setIndex(prevIndex => (prevIndex + 1) % phrases.length);
-            setOpacity(1);
-        }, 3000); 
+        // 3. After fade out (0.5s later), change index and fade in
+        const change = setTimeout(() => {
+            setIndex(prevIndex => (prevIndex + 1) % phrases.length);
+            setOpacity(1);
+        }, 2000); // Reduced total cycle time to 2.0s (1.5s show + 0.5s fade)
 
-        return () => {
-            clearTimeout(show);
-            clearTimeout(change);
-        };
-    }, [index]); // Depend on index to restart the sequence
+        return () => {
+            clearTimeout(show);
+            clearTimeout(change);
+        };
+    }, [index]); // Depend on index to restart the sequence
 
-    return (
-        <span 
-            style={{ 
-                color: sageGreen.primary, // SAGE GREEN Accent
-                transition: 'opacity 0.5s ease', 
-                opacity: opacity 
-            }}
-        >
-            {currentPhrase}
-        </span>
-    );
+    return (
+        <span 
+            style={{ 
+                color: sageGreen.primary, // SAGE GREEN Accent
+                transition: 'opacity 0.5s ease', 
+                opacity: opacity 
+            }}
+        >
+            {currentPhrase}
+        </span>
+    );
 };
+
 
 // Login Form Modal Component
 const LoginModal = ({ show, onClose }) => {

@@ -104,19 +104,21 @@ app.post('/api/courses/generate', async (req, res) => {
     const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const systemPrompt = `You are Prompt2Learn, an expert course designer. Create a detailed 7-day study plan 
-    with a compelling courseTitle. For each day 1..7, include a dayTitle and 3-5 short lessons 
-    with title and detailed description. 
-    
-    Return ONLY valid JSON following this schema: 
-    {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, 
-    "lessons": [{"title": string, "description": string}]}]}. Keep it actionable, no markdown.`;
+    const systemPrompt = `You are Prompt2Learn, an expert course designer. Your goal is to create a high-quality, comprehensive learning path based on the user's request.
 
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: `User prompt: ${prompt}` }
-    ]);
+1. **Duration:** Analyze the user's learning goal and **consider the number of days given by the user to determine the optimal path** for a comprehensive study plan. If no timeline is given, give the optimal plan for 7 days.
+2. **Structure:** Create this day-by-day study plan with a compelling courseTitle. For each day, include a dayTitle and 3-5 distinct lessons.
+3. **Detail Requirement:** The 'description' field for each lesson **must be highly detailed and substantive (at least 3-4 sentences long)**. This description should provide an in-depth summary of the topic, practical application goals, and key concepts or tasks for that specific lesson.
+    **Do NOT use short or brief descriptions.**
 
+Return ONLY valid JSON following this schema: 
+{"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, 
+"lessons": [{"title": string, "description": string}]}]}. Keep the JSON content clean and actionable, with no markdown or extra text.`;
+
+const result = await model.generateContent([
+  { text: systemPrompt },
+  { text: `User prompt: ${prompt}` }
+]);
     const text = result.response.text();
     // Attempt to parse JSON from response (strip code fences if any)
     const jsonString = text.replace(/^```json\n?|\n?```$/g, '').trim();
@@ -134,7 +136,7 @@ app.post('/api/courses/generate', async (req, res) => {
       }
     }
 
-    if (!plan || !Array.isArray(plan.days) || plan.days.length !== 7) {
+    if (!plan || !Array.isArray(plan.days) || plan.days.length == 0) {
       return res.status(502).json({ error: 'invalid plan structure from model' });
     }
 
