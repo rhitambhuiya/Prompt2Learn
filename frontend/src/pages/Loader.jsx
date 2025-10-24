@@ -81,7 +81,7 @@ const pureCssStyles = `
       black 25%
     );
     animation:
-      transform-animation 1s infinite alternate,
+      transform-animation 2s infinite alternate,
       opacity-animation 4s infinite;
     animation-timing-function: cubic-bezier(0.6, 0.8, 0.5, 1);
   }

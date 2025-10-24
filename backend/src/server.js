@@ -115,10 +115,10 @@ app.post('/api/auth/login', async (req, res) => {
   const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
   const user = result.rows[0];
 
-  if (!user) return res.status(401).json({ error: 'invalid credentials' });
+  if (!user) return res.status(401).json({ error: 'User not registered' });
 
   const ok = bcrypt.compareSync(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+  if (!ok) return res.status(401).json({ error: 'Invalid Credentials' });
 
   return res.json({ id: user.id, username: user.username });
 });
@@ -140,7 +140,9 @@ app.post('/api/courses/generate', async (req, res) => {
 
 1. **Duration:** Analyze the user's learning goal and **consider the number of days given by the user to determine the optimal path** for a comprehensive study plan. If no timeline is given, give the optimal plan for 7 days.
 2. **Structure:** Create this day-by-day study plan with a compelling courseTitle. For each day, include a dayTitle and 3-5 distinct lessons.
-3. **Detail Requirement:** The 'description' field for each lesson **must be highly detailed and substantive (at least 3-4 sentences long)**. This description should provide an in-depth summary of the topic, practical application goals, and key concepts or tasks for that specific lesson.
+3. **Detail Requirement:** The 'description' field for each lesson **must follow the user's prompt
+strictly and the length and content should be appropriate to that**. This description should provide an in-depth summary 
+of the topic, practical application goals, and key concepts or tasks for that specific lesson.
     **Do NOT use short or brief descriptions.**
 
 Return ONLY valid JSON following this schema: 
@@ -304,7 +306,7 @@ app.get('/api/courses/:courseId', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Prompt2Learn backend running on http://localhost:${PORT}`);
 });

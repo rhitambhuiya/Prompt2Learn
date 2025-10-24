@@ -79,7 +79,7 @@ const styles = {
     border: `1px solid ${sageGreen.darkBorder}`,
     borderLeft: `4px solid ${sageGreen.secondary}`, // Default green border accent
     borderRadius: '10px',
-    padding: '16px', // Increased padding
+    padding: '25px', // Increased padding
     cursor: 'pointer',
     color: '#eaf0ff',
     transition: 'all 0.2s ease',
