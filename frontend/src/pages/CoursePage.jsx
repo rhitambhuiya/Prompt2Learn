@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, LogOut, BookOpen, Clock } from 'lucide-react';
 
@@ -173,7 +173,7 @@ export default function CoursePage() {
   const navigate = useNavigate(); // ADDED useNavigate hook
 
   // Mock user/logout handlers for header integration (since this file is standalone)
-  const user = { username: "Rhitam Bhuiya", id: "12345" };
+  const user = useMemo(() => JSON.parse(localStorage.getItem('p2l_user') || 'null'), []);
   const handleLogout = () => {
     localStorage.removeItem('p2l_user');
     // Use navigate to redirect, matching the Dashboard logic
