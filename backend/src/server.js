@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import Database from 'better-sqlite3';
+// 1. IMPORT pg client for PostgreSQL
+import pg from 'pg';
 
 dotenv.config();
 
@@ -11,38 +12,66 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Database setup
-const db = new Database('prompt2learn.db');
-db.pragma('journal_mode = WAL');
+// =======================================================
+// 2. DATABASE SETUP: Use pg.Pool instead of better-sqlite3
+// =======================================================
+const { Pool } = pg;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Reads from .env
+  ssl: {
+    rejectUnauthorized: false, // May be required for some Neon setups, though their string should handle it
+  }
+});
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
+// Test connection and create tables
+(async () => {
+  try {
+    const client = await pool.connect();
+    console.log('Successfully connected to PostgreSQL via Pool.');
 
-CREATE TABLE IF NOT EXISTS courses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    prompt TEXT NOT NULL,
-    title TEXT NOT NULL,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-);
+    // 3. POSTGRES TABLE CREATION LOGIC
+    // Using BIGSERIAL for auto-incrementing IDs and TEXT/TIMESTAMP types
+    await client.query(`
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Useful for creating UUIDs later, but not strictly needed for this schema
+      
+      -- USERS TABLE
+      CREATE TABLE IF NOT EXISTS users (
+          id BIGSERIAL PRIMARY KEY,
+          username TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
 
-CREATE TABLE IF NOT EXISTS lessons (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    course_id INTEGER NOT NULL,
-    day_index INTEGER NOT NULL,
-    day_title TEXT NOT NULL,
-    lesson_index INTEGER NOT NULL,
-    lesson_title TEXT NOT NULL,
-    lesson_description TEXT,
-    FOREIGN KEY(course_id) REFERENCES courses(id)
-);
-`);
+      -- COURSES TABLE
+      CREATE TABLE IF NOT EXISTS courses (
+          id BIGSERIAL PRIMARY KEY,
+          user_id BIGINT NOT NULL,
+          prompt TEXT NOT NULL,
+          title TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      -- LESSONS TABLE
+      CREATE TABLE IF NOT EXISTS lessons (
+          id BIGSERIAL PRIMARY KEY,
+          course_id BIGINT NOT NULL,
+          day_index INTEGER NOT NULL,
+          day_title TEXT NOT NULL,
+          lesson_index INTEGER NOT NULL,
+          lesson_title TEXT NOT NULL,
+          lesson_description TEXT,
+          FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE CASCADE
+      );
+    `);
+    client.release();
+    console.log('PostgreSQL tables checked/created successfully.');
+  } catch (err) {
+    console.error('PostgreSQL connection or table creation failed:', err.message);
+    process.exit(1);
+  }
+})();
+// =======================================================
 
 // Helpers
 function getGenAI() {
@@ -53,53 +82,56 @@ function getGenAI() {
   return new GoogleGenerativeAI(apiKey);
 }
 
-// Auth endpoints (simple username/password, no sessions; frontend will store user id)
-app.post('/api/auth/register', (req, res) => {
+// =======================================================
+// 4. API HANDLER MODIFICATIONS (Using Pool for queries)
+// =======================================================
+
+// Auth endpoints
+app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'username and password required' });
   try {
     const passwordHash = bcrypt.hashSync(password, 10);
-    const stmt = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
-    const info = stmt.run(username, passwordHash);
-    return res.json({ id: info.lastInsertRowid, username });
+    // Use parameterized query with $1, $2, etc.
+    const result = await pool.query(
+      'INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id',
+      [username, passwordHash]
+    );
+    // PostgreSQL returns new ID in `rows[0].id`
+    return res.json({ id: result.rows[0].id, username });
   } catch (e) {
-    if (e && e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+    // Check for PostgreSQL unique constraint violation (Error code 23505)
+    if (e.code === '23505') {
       return res.status(409).json({ error: 'username already exists' });
     }
-    return res.status(500).json({ error: 'failed to register' });
+    return res.status(500).json({ error: 'failed to register', details: e.message });
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'username and password required' });
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  // Use parameterized query
+  const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+  const user = result.rows[0];
+
   if (!user) return res.status(401).json({ error: 'invalid credentials' });
+
   const ok = bcrypt.compareSync(password, user.password_hash);
   if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+
   return res.json({ id: user.id, username: user.username });
 });
 
 // Generate study plan with Gemini
-// Expected response JSON structure:
-// {
-//   "courseTitle": string,
-//   "days": [
-//     {
-//       "dayIndex": number,
-//       "dayTitle": string,
-//       "lessons": [
-//         { "title": string, "description": string }
-//       ]
-//     }, ... up to 7 days
-//   ]
-// }
 app.post('/api/courses/generate', async (req, res) => {
   const { userId, prompt } = req.body || {};
   if (!userId || !prompt) return res.status(400).json({ error: 'userId and prompt required' });
-  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-  if (!user) return res.status(404).json({ error: 'user not found' });
 
+  const userResult = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+  if (userResult.rowCount === 0) return res.status(404).json({ error: 'user not found' });
+
+  let client;
   try {
     const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
@@ -115,10 +147,10 @@ Return ONLY valid JSON following this schema:
 {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, 
 "lessons": [{"title": string, "description": string}]}]}. Keep the JSON content clean and actionable, with no markdown or extra text.`;
 
-const result = await model.generateContent([
-  { text: systemPrompt },
-  { text: `User prompt: ${prompt}` }
-]);
+    const result = await model.generateContent([
+      { text: systemPrompt },
+      { text: `User prompt: ${prompt}` }
+    ]);
     const text = result.response.text();
     // Attempt to parse JSON from response (strip code fences if any)
     const jsonString = text.replace(/^```json\n?|\n?```$/g, '').trim();
@@ -136,97 +168,143 @@ const result = await model.generateContent([
       }
     }
 
-    if (!plan || !Array.isArray(plan.days) || plan.days.length == 0) {
+    if (!plan || !Array.isArray(plan.days) || plan.days.length === 0) {
       return res.status(502).json({ error: 'invalid plan structure from model' });
     }
 
-    const insertCourse = db.prepare('INSERT INTO courses (user_id, prompt, title) VALUES (?, ?, ?)');
-    const courseInfo = insertCourse.run(userId, prompt, plan.courseTitle || '7-Day Study Plan');
-    const courseId = courseInfo.lastInsertRowid;
+    // Start a transaction for inserting course and lessons
+    client = await pool.connect();
+    await client.query('BEGIN');
 
-    const insertLesson = db.prepare(`INSERT INTO lessons (course_id, day_index, day_title, lesson_index, lesson_title, lesson_description) VALUES (?, ?, ?, ?, ?, ?)`);
-    const insertMany = db.transaction((days) => {
-      for (const day of days) {
-        const dayIndex = day.dayIndex;
-        const dayTitle = day.dayTitle || `Day ${dayIndex}`;
-        for (let i = 0; i < day.lessons.length; i++) {
-          const lesson = day.lessons[i];
-          insertLesson.run(courseId, dayIndex, dayTitle, i + 1, lesson.title, lesson.description || '');
-        }
+    // 1. Insert Course
+    const insertCourseQuery = 'INSERT INTO courses (user_id, prompt, title) VALUES ($1, $2, $3) RETURNING id';
+    const courseResult = await client.query(insertCourseQuery, [userId, prompt, plan.courseTitle || '7-Day Study Plan']);
+    const courseId = courseResult.rows[0].id;
+
+    // 2. Prepare for Lesson Inserts
+    const insertLessonQuery = `INSERT INTO lessons (course_id, day_index, day_title, lesson_index, lesson_title, lesson_description) 
+                               VALUES ($1, $2, $3, $4, $5, $6)`;
+
+    // 3. Insert all Lessons
+    for (const day of plan.days) {
+      const dayIndex = day.dayIndex;
+      const dayTitle = day.dayTitle || `Day ${dayIndex}`;
+      for (let i = 0; i < day.lessons.length; i++) {
+        const lesson = day.lessons[i];
+        await client.query(insertLessonQuery, [
+          courseId,
+          dayIndex,
+          dayTitle,
+          i + 1,
+          lesson.title,
+          lesson.description || ''
+        ]);
       }
-    });
-    insertMany(plan.days);
+    }
+
+    await client.query('COMMIT');
 
     return res.json({ courseId, title: plan.courseTitle, days: plan.days });
   } catch (e) {
-    return res.status(500).json({ error: 'generation failed', details: e.message });
+    if (client) {
+      await client.query('ROLLBACK'); // Rollback on any error
+    }
+    return res.status(500).json({ error: 'generation or database transaction failed', details: e.message });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
 // List user courses
-app.get('/api/courses', (req, res) => {
+app.get('/api/courses', async (req, res) => {
   const userId = Number(req.query.userId);
   if (!userId) return res.status(400).json({ error: 'userId query required' });
-  const rows = db.prepare('SELECT id, title, prompt, created_at FROM courses WHERE user_id = ? ORDER BY created_at DESC').all(userId);
-  return res.json(rows);
+
+  try {
+    // Use parameterized query and standard column names
+    const result = await pool.query(
+      'SELECT id, title, prompt, created_at FROM courses WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    // PostgreSQL returns rows in the `rows` property
+    return res.json(result.rows);
+  } catch (e) {
+    return res.status(500).json({ error: 'failed to fetch courses', details: e.message });
+  }
 });
 
-app.delete('/api/courses/:courseId', (req, res) => {
+app.delete('/api/courses/:courseId', async (req, res) => {
+  const courseId = parseInt(req.params.courseId, 10);
+  if (isNaN(courseId)) {
+    return res.status(400).json({ success: false, message: 'Invalid course ID format' });
+  }
+
+  let client;
   try {
-    const courseId = parseInt(req.params.courseId, 10);
-    if (isNaN(courseId)) {
-      return res.status(400).json({ success: false, message: 'Invalid course ID format' });
-    }
+    // Start a transaction
+    client = await pool.connect();
+    await client.query('BEGIN');
 
-    // --- START OF FIX: Delete dependent records first ---
+    // 1. Delete from the 'lessons' table (dependent table)
+    // The ON DELETE CASCADE constraint added during table creation would handle this automatically,
+    // but manually deleting lessons first is safer and mirrors the original intent.
+    await client.query('DELETE FROM lessons WHERE course_id = $1', [courseId]);
 
-    // 1. Delete from the 'lessons' table (assuming this is the dependent table)
-    db.prepare('DELETE FROM lessons WHERE course_id = ?').run(courseId);
+    // 2. Delete the course itself
+    const deleteCourseResult = await client.query('DELETE FROM courses WHERE id = $1', [courseId]);
 
-    // 2. Delete from any other dependent tables (e.g., 'enrollments')
-    // db.prepare('DELETE FROM enrollments WHERE course_id = ?').run(courseId);
+    await client.query('COMMIT'); // Commit the transaction
 
-    // --- END OF FIX ---
-    
-    // Now, delete the course itself
-    const deleteCourse = db.prepare('DELETE FROM courses WHERE id = ?');
-    const result = deleteCourse.run(courseId);
-
-    if (result.changes > 0) {
+    if (deleteCourseResult.rowCount > 0) {
       res.json({ success: true, message: 'Course and all related data deleted successfully' });
     } else {
       res.status(404).json({ success: false, message: 'Course not found' });
     }
   } catch (error) {
+    if (client) await client.query('ROLLBACK'); // Rollback on error
     console.error('Error deleting course:', error);
-    // If the error code is known, you can return a more specific 409 Conflict
-    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
-        return res.status(409).json({ success: false, message: 'Cannot delete course due to existing dependencies.' });
-    }
     res.status(500).json({ success: false, message: 'Internal server error' });
+  } finally {
+    if (client) client.release();
   }
 });
 
 // Get course with lessons
-app.get('/api/courses/:courseId', (req, res) => {
+app.get('/api/courses/:courseId', async (req, res) => {
   const courseId = Number(req.params.courseId);
-  const course = db.prepare('SELECT id, title, prompt, created_at FROM courses WHERE id = ?').get(courseId);
-  if (!course) return res.status(404).json({ error: 'course not found' });
-  const daysMap = new Map();
-  const lessons = db.prepare('SELECT day_index, day_title, lesson_index, lesson_title, lesson_description FROM lessons WHERE course_id = ? ORDER BY day_index ASC, lesson_index ASC').all(courseId);
-  for (const l of lessons) {
-    if (!daysMap.has(l.day_index)) {
-      daysMap.set(l.day_index, { dayIndex: l.day_index, dayTitle: l.day_title, lessons: [] });
+
+  try {
+    // Get the course details
+    const courseResult = await pool.query('SELECT id, title, prompt, created_at FROM courses WHERE id = $1', [courseId]);
+    const course = courseResult.rows[0];
+    if (!course) return res.status(404).json({ error: 'course not found' });
+
+    // Get all lessons for the course
+    const lessonsResult = await pool.query(
+      'SELECT day_index, day_title, lesson_index, lesson_title, lesson_description FROM lessons WHERE course_id = $1 ORDER BY day_index ASC, lesson_index ASC',
+      [courseId]
+    );
+    const lessons = lessonsResult.rows;
+
+    // Reconstruct the nested structure
+    const daysMap = new Map();
+    for (const l of lessons) {
+      if (!daysMap.has(l.day_index)) {
+        daysMap.set(l.day_index, { dayIndex: l.day_index, dayTitle: l.day_title, lessons: [] });
+      }
+      daysMap.get(l.day_index).lessons.push({ title: l.lesson_title, description: l.lesson_description });
     }
-    daysMap.get(l.day_index).lessons.push({ title: l.lesson_title, description: l.lesson_description });
+    const days = Array.from(daysMap.values()).sort((a, b) => a.dayIndex - b.dayIndex);
+
+    return res.json({ ...course, days });
+  } catch (e) {
+    return res.status(500).json({ error: 'failed to fetch course details', details: e.message });
   }
-  const days = Array.from(daysMap.values()).sort((a, b) => a.dayIndex - b.dayIndex);
-  return res.json({ ...course, days });
 });
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Prompt2Learn backend running on http://localhost:${PORT}`);
 });
-
-
