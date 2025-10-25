@@ -12,6 +12,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173', // Development frontend
+    'https://prompt2learn.netlify.app', // Your actual Netlify domain
     'https://*.netlify.app' // Allow all Netlify domains (including previews)
   ],
   credentials: true
