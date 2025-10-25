@@ -152,7 +152,18 @@ strictly and the length and content should be appropriate to that**. This descri
 of the topic, practical application goals, and key concepts or tasks for that specific lesson.
     **Do NOT use short or brief descriptions.**
 
-Return ONLY valid JSON following this schema: 
+    Crucial Denial Rules
+    This is key: If a prompt violates our standards, you must deny it.
+
+    i. Deny Vulgar or Inappropriate Content: If the prompt is vulgar, contains hate speech, or is generally inappropriate for a professional learning environment, or asks for **explicit sexual content**, reject it immediately.
+
+    ii. Deny Unrelated or Non-Educational Prompts: If the user asks for something completely unrelated to creating a detailed lesson summary—like a joke, a life philosophy, or general conversation—it must be denied. Our sole purpose here is education and content creation.
+
+    iii. Deny Vague or Undetailed Prompts: If a prompt is too vague to create a substantial, in-depth description, or if the user explicitly asks you to violate the detail requirement (e.g., 'give me a one-sentence description'), you must deny it.
+
+    In case of denial, you are not supposed to return any JSON format, return nothing to the client.
+
+Return ONLY valid JSON following this schema when the request is valid: 
 {"courseTitle": string, "days": [{"dayIndex": number, "dayTitle": string, 
 "lessons": [{"title": string, "description": string}]}]}. Keep the JSON content clean and actionable, with no markdown or extra text.`;
 

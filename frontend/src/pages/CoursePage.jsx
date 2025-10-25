@@ -157,6 +157,7 @@ function CollapsibleLesson({ title, description }) {
             fontSize: '18px', // Increased Lesson Description content font size (was 16px)
             marginTop: 12, // Increased margin
             lineHeight: 1.6,
+            textAlign: 'justify'
           }}
         >
           {description}
