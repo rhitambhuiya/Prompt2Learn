@@ -253,7 +253,7 @@ const LoginModal = ({ show, onClose }) => {
 
         setLoading(true)
         try {
-            const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/${mode}`, {
+            const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/auth/${mode}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -281,7 +281,7 @@ const LoginModal = ({ show, onClose }) => {
             navigate('/')
         } catch (e) {
             // Note: Updated the VITE_API_URL fallback to 4000 to match the server file
-            setError(e.message.includes('Failed to fetch') ? 'Cannot connect to the API server. Make sure the backend is running on port 3000.' : e.message)
+            setError(e.message.includes('Failed to fetch') ? 'Cannot connect to the API server. Make sure the backend is running on port 4000.' : e.message)
         } finally {
             setLoading(false)
         }

@@ -185,7 +185,7 @@ export default function CoursePage() {
     async function load() {
       try {
         const resp = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/courses/${courseId}`
+          `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/courses/${courseId}`
         );
         const data = await resp.json();
         setCourse(data);

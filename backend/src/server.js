@@ -9,7 +9,13 @@ import pg from 'pg';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173', // Development frontend
+    'https://*.netlify.app' // Allow all Netlify domains (including previews)
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // =======================================================
@@ -306,7 +312,7 @@ app.get('/api/courses/:courseId', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Prompt2Learn backend running on http://localhost:${PORT}`);
 });

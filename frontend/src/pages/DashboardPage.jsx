@@ -506,7 +506,7 @@ export default function DashboardPage() {
 		if (!user || !user.id) return;
 		try {
 			// 1. Fetch from the actual (simulated) API
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 			const resp = await fetch(`${apiUrl}/api/courses?userId=${user.id}`);
 			const data = await resp.json();
 			
@@ -549,7 +549,7 @@ export default function DashboardPage() {
 		setError(null);
 
 		try {
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 			const resp = await fetch(
 				`${apiUrl}/api/courses/generate`,
 				{
@@ -602,7 +602,7 @@ export default function DashboardPage() {
 		setCourseToDelete(null); // Close the modal immediately
 
 		try {
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 			const response = await fetch(`${apiUrl}/api/courses/${courseId}`, {
 				method: 'DELETE',
 			});
