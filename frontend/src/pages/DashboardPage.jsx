@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { X, AlertTriangle, ChevronRight, BookOpen, LogOut, Trash, CheckCircle } from 'lucide-react'; // Added CheckCircle
 import Loader from './Loader';
+import { API_URL } from '../config';
 // Assuming Loader component is defined elsewhere or imported from './Loader'
 
 // --- SAGE GREEN PALETTE DEFINITIONS (Matched to previous theme) ---
@@ -506,7 +507,7 @@ export default function DashboardPage() {
 		if (!user || !user.id) return;
 		try {
 			// 1. Fetch from the actual (simulated) API
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+			const apiUrl = API_URL;
 			const resp = await fetch(`${apiUrl}/api/courses?userId=${user.id}`);
 			const data = await resp.json();
 			
@@ -549,7 +550,7 @@ export default function DashboardPage() {
 		setError(null);
 
 		try {
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+			const apiUrl = API_URL;
 			const resp = await fetch(
 				`${apiUrl}/api/courses/generate`,
 				{
@@ -602,7 +603,7 @@ export default function DashboardPage() {
 		setCourseToDelete(null); // Close the modal immediately
 
 		try {
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+			const apiUrl = API_URL;
 			const response = await fetch(`${apiUrl}/api/courses/${courseId}`, {
 				method: 'DELETE',
 			});

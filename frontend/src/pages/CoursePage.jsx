@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, LogOut, BookOpen, Clock } from 'lucide-react';
+import { API_URL } from '../config';
 
 // --- SAGE GREEN PALETTE DEFINITIONS (COPIED FROM DASHBOARD) ---
 const sageGreen = {
@@ -185,7 +186,7 @@ export default function CoursePage() {
     async function load() {
       try {
         const resp = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/courses/${courseId}`
+          `${API_URL}/api/courses/${courseId}`
         );
         const data = await resp.json();
         setCourse(data);

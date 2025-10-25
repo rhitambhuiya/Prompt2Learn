@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, Zap, Clock, TrendingUp, X, Eye, EyeOff } from 'lucide-react'; // <-- ADDED Eye, EyeOff
+import { API_URL } from '../config';
 
 // --- SAGE GREEN PALETTE DEFINITIONS ---
 const sageGreen = {
@@ -253,7 +254,7 @@ const LoginModal = ({ show, onClose }) => {
 
         setLoading(true)
         try {
-            const resp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/auth/${mode}`, {
+            const resp = await fetch(`${API_URL}/api/auth/${mode}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
