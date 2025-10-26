@@ -433,7 +433,7 @@ const LoginModal = ({ show, onClose }) => {
                             marginTop: '10px'
                         }} 
                         disabled={loading}
-                        onMouseEnter={(e) => { if (!loading) e.target.style.background = `linear-gradient(to right, ${sageGreen.lightHover}, ${sageGreen.primary})`; }} // SAGE GREEN Hover
+                        onMouseEnter={(e) => { if (!loading) e.target.style.backgFround = `linear-gradient(to right, ${sageGreen.lightHover}, ${sageGreen.primary})`; }} // SAGE GREEN Hover
                         onMouseLeave={(e) => { if (!loading) e.target.style.background = darkStyles.btnPrimary.background; }}
                     >
                         {loading ? 'Please wait...' : (mode==='login'?'Log In':'Create Account')}
@@ -453,11 +453,11 @@ const FeatureCard = ({ icon, title, description, color }) => (
         minHeight: darkStyles.featureCard.minHeight, // Use the new smaller min height
         borderLeft: `4px solid ${color}`,
         backgroundColor: '#1C1C1C', // Ensure card is distinct from modal
-        transition: 'transform 0.3s ease',
+        transition: 'transform 0.5s ease',
         cursor: 'default',
         boxShadow: '0 5px 15px rgba(0, 0, 0, 0.25)',
     }}
-    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-15px)'}
     onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
     >
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}> {/* REDUCED MARGIN BOTTOM */}

@@ -232,7 +232,7 @@ export default function CoursePage() {
             <Link 
                 to="/" 
                 style={{ 
-                    color: sageGreen.primary, 
+                    color: sageGreen.lightText, 
                     marginBottom: '32px', // Increased margin
                     display: 'flex', 
                     alignItems: 'center', 
@@ -269,7 +269,7 @@ export default function CoursePage() {
                 
                 {course.days && (
                     <div style={{ 
-                        color: sageGreen.primary, 
+                        color: sageGreen.lightText, 
                         fontSize: '16px', 
                         display: 'flex', 
                         alignItems: 'center', 
@@ -279,8 +279,8 @@ export default function CoursePage() {
                         Plan duration:{' '}
                         <span style={{
                             padding: '4px 10px',
-                            backgroundColor: `rgba(16, 185, 129, 0.2)`, 
-                            color: sageGreen.lightHover,
+                            backgroundColor: `rgba(15, 173, 123, 0.2)`, 
+                            color: "#ffffff",
                             borderRadius: '9999px',
                             fontWeight: '600',
                             fontSize: '14px',

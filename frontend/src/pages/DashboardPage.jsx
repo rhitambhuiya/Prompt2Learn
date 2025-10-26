@@ -39,7 +39,7 @@ const styles = {
 	// Primary button style (Black/White style)
 	buttonPrimary: {
 		width: '100%',
-		padding: '12px 18px',
+		padding: '10px',
 		fontSize: '16px',
 		fontWeight: '700',
 		borderRadius: '50px',
@@ -57,7 +57,7 @@ const styles = {
 		width: '100%',
 		padding: '16px',
 		borderRadius: '12px',
-		border: `2px solid ${sageGreen.secondary}`,
+		border: `2px solid ${sageGreen.secondary}80`,
 		backgroundColor: sageGreen.darkBackground,
 		color: '#ffffff',
 		fontSize: '16px',
@@ -68,7 +68,7 @@ const styles = {
 	// Suggestion tag button style
 	buttonTag: {
 		padding: '10px 18px',
-		backgroundColor: `rgba(5, 150, 105, 0.15)`,
+		backgroundColor: `rgba(0, 0, 0, 0.15)`,
 		border: `1px solid ${sageGreen.secondary}80`,
 		color: '#ffffff',
 		borderRadius: '9999px',
@@ -674,7 +674,7 @@ export default function DashboardPage() {
 							}}
 							value={prompt}
 							onChange={(e) => setPrompt(e.target.value)}
-							placeholder="e.g. Learn Python for Data Analysis as a complete beginner or a 7-day crash course on Web Accessibility."
+							placeholder="e.g. Learn Python for Data Analysis as a complete beginner."
 							disabled={isGenerating}
 						/>
 						<button
@@ -745,7 +745,7 @@ export default function DashboardPage() {
 										e.target.style.transform = 'translateY(-1px)';
 									}}
 									onMouseLeave={(e) => {
-										e.target.style.backgroundColor = 'rgba(5, 150, 105, 0.15)';
+										e.target.style.backgroundColor = 'rgba(2, 2, 2, 0.15)';
 										e.target.style.color = '#ffffff';
 										e.target.style.transform = 'translateY(0)';
 									}}
