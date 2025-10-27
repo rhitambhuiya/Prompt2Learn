@@ -452,6 +452,73 @@ const CourseCard = ({ course, onMarkComplete, onDelete, isActive }) => {
 };
 // --- END COURSE CARD COMPONENT ---
 
+const ToastNotification = ({ message, type, onDismiss }) => {
+    if (!message) return null;
+
+    const isSuccess = type === 'success';
+    const isError = type === 'error';
+    // NEW TYPE: Used for successfully completing a destructive action (like deletion)
+    const isDeletionSuccess = type === 'deletion_success'; 
+
+    // Determine colors
+    let bgColor = isError ? '#dc2626' : '#16a34a'; // Default green, red for error
+    
+    if (isDeletionSuccess) {
+        bgColor = '#b91c1c'; // Use a deep red for the deletion confirmation
+    } else if (isSuccess) {
+        bgColor = '#16a34a'; // Green for normal success
+    }
+
+    // Determine icon
+    let icon = <AlertTriangle size={20} />;
+    
+    if (isSuccess || isDeletionSuccess) {
+        icon = <CheckCircle size={20} />; // Checkmark for any successful action (Green or Red)
+    }
+
+    return (
+        <div 
+            style={{
+                position: 'fixed',
+                bottom: '24px',
+                right: '24px',
+                zIndex: 1000,
+                backgroundColor: bgColor,
+                color: 'white',
+                padding: '16px 20px',
+                borderRadius: '12px',
+                boxShadow: '0 6px 16px rgba(0, 0, 0, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                maxWidth: '350px',
+                animation: 'slideIn 0.3s ease-out',
+            }}
+        >
+            <style>{`
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `}</style>
+            {icon}
+            <span style={{ flexGrow: 1, fontWeight: '500', fontSize: '15px' }}>{message}</span>
+            <button
+                onClick={onDismiss}
+                style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    cursor: 'pointer',
+                    padding: '4px',
+                }}
+            >
+                <X size={16} />
+            </button>
+        </div>
+    );
+};
+
 // Main Dashboard Component
 export default function DashboardPage() {
 	// Utility function to get user from local storage
@@ -467,8 +534,16 @@ export default function DashboardPage() {
 	const [courses, setCourses] = useState([]); 
 	const [error, setError] = useState(null);
 	const [courseToDelete, setCourseToDelete] = useState(null); 
+	const [toast, setToast] = useState({ message: null, type: null });
 	
 	const navigate = useNavigate();
+
+	const showToast = (message, type) => {
+		setToast({message, type});
+		setTimeout(() => {
+			setToast({ message: null, type: null });
+		}, 4000)
+	}
 
 	/**
 	 * Filters courses into active and completed lists for rendering.
@@ -581,6 +656,7 @@ export default function DashboardPage() {
 	 * Handles marking a course as completed. (Unchanged)
 	 */
 	const handleMarkComplete = (courseId) => {
+		const completedCourse = courses.find(c => c.id == courseId)
 		const newCourses = courses.map(c => 
 			c.id === courseId ? { ...c, status: 'completed' } : c
 		);
@@ -588,6 +664,8 @@ export default function DashboardPage() {
 		
 		// Update persistent storage with new status
 		saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
+
+		showToast(`Course "${completedCourse.title || 'Untitled'}" completed!`, 'success');
 	};
 
 	/**
@@ -600,6 +678,7 @@ export default function DashboardPage() {
 		setIsDeleting(true);
 		setError(null);
 		const courseId = courseToDelete.id;
+		const courseTitle = courseToDelete.title;
 		setCourseToDelete(null); // Close the modal immediately
 
 		try {
@@ -615,9 +694,11 @@ export default function DashboardPage() {
 				const newCourses = courses.filter(c => c.id !== courseId);
 				setCourses(newCourses);
 				saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
+				showToast(`Course "${courseTitle || 'Untitled'}" successfully deleted!`, 'deletion_success');
 			} else {
 				// Deletion Failed
 				setError(`Deletion Failed: ${data.message || 'Unknown error occurred.'}`);
+				showToast('Could not delete course!', 'error');
 			}
 		} catch (error) {
 			console.error('Error deleting course:', error);
@@ -649,6 +730,12 @@ export default function DashboardPage() {
 				/>
 			)}
 
+			<ToastNotification
+				message={toast.message}
+				type={toast.type}
+				onDismiss={() => setToast({ message: null, type: null })}
+
+			/>
 			{/* Content Wrapper to apply max-width, centering, and PADDING */}
 			<div style={styles.contentWrapper}>
 
