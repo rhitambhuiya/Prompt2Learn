@@ -26,6 +26,7 @@ const darkStyles = {
         alignItems: 'center',
         padding: '24px 0',
         paddingTop: '64px', // Space for the fixed header
+        overflowX: 'hidden',
     },
     // Fixed Header styles
     header: {
@@ -52,6 +53,9 @@ const darkStyles = {
         letterSpacing: '0.5px',
         textShadow: `0 0 5px ${sageGreen.primary}${sageGreen.shadowOpacity}`, // SAGE GREEN shadow
         fontFamily: 'cursive', // ADDED CURSIVE FONT
+        whiteSpace: 'nowrap', 
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
     },
     // Modal Backdrop
     modalBackdrop: {
@@ -66,7 +70,7 @@ const darkStyles = {
     },
     // Modal and Form Card styles
     formCard: {
-        maxWidth: '420px',
+        maxWidth: '400px',
         width: '90%',
         backgroundColor: '#121212', // Card background
         border: '1px solid #333333',
@@ -512,12 +516,13 @@ export default function LoginPage() {
                 // PUSH CONTENTS UPWARDS: Use flex-start and reduce top margin on the content container
                 justifyContent: 'flex-start',
                 paddingTop: '40px', // Adjusted top spacing
+                boxSizing: 'border-box',
             }}>
                 <div style={{marginBottom: '60px', marginTop: '0px'}}> {/* REMOVED TOP MARGIN */}
                     <h1 style={{fontSize: '60px', fontWeight: '900', color: '#E0E0E0', marginBottom: '16px', lineHeight: 1.2, fontFamily: 'cursive'}}> {/* APPLIED CURSIVE FONT */}
                         Prompt2Learn: Learn <AnimatedText />
                     </h1>
-                    <p style={{fontSize: '24px', color: '#A0A0A0', maxWidth: '800px', margin: '0 auto'}}>
+                    <p style={{fontSize: '24px', color: '#A0A0A0', maxWidth: '700px', margin: '0 auto'}}>
                         Generate custom, AI-powered learning paths on any topic, designed just for you.
                     </p>
                     <button 
