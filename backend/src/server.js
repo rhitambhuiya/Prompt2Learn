@@ -141,7 +141,7 @@ app.post('/api/courses/generate', async (req, res) => {
   let client;
   try {
     const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const systemPrompt = `You are Prompt2Learn, an expert course designer. Your goal is to create a high-quality, comprehensive learning path based on the user's request.
 
