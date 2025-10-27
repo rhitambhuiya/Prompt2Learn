@@ -3,10 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { X, AlertTriangle, ChevronRight, BookOpen, LogOut, Trash, CheckCircle } from 'lucide-react'; // Added CheckCircle
 import Loader from './Loader';
 import { API_URL } from '../config';
+import { toast } from 'react-toastify'
+
 // Assuming Loader component is defined elsewhere or imported from './Loader'
 
 // --- SAGE GREEN PALETTE DEFINITIONS (Matched to previous theme) ---
-const sageGreen = {
+export const sageGreen = {
 	primary: '#10b981', // More Vibrant Emerald Green
 	secondary: '#059669', // Darker Vibrant Green
 	lightHover: '#34d399', // Brighter Mint Green for hover effect
@@ -135,43 +137,6 @@ const styles = {
 		color: '#ffffff'
 	},
 };
-
-// --- NEW GENERATION LOADER: Pulsing Dots (Green Theme) ---
-const GenerationLoader = ({ message }) => (
-    <div style={{
-		position: 'fixed', inset: 0, zIndex: 60,
-		display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(4px)',
-	}}>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            {/* Dot 1 */}
-            <div style={{
-                width: '12px', height: '12px', backgroundColor: sageGreen.primary, borderRadius: '50%',
-                animation: 'pulse 1.5s infinite ease-in-out', animationDelay: '0s'
-            }} />
-            {/* Dot 2 */}
-            <div style={{
-                width: '12px', height: '12px', backgroundColor: sageGreen.secondary, borderRadius: '50%',
-                animation: 'pulse 1.5s infinite ease-in-out', animationDelay: '0.3s'
-            }} />
-            {/* Dot 3 */}
-            <div style={{
-                width: '12px', height: '12px', backgroundColor: sageGreen.lightHover, borderRadius: '50%',
-                animation: 'pulse 1.5s infinite ease-in-out', animationDelay: '0.6s'
-            }} />
-        </div>
-        <p style={{ color: sageGreen.lightHover, marginTop: '0', fontSize: '18px', fontWeight: '600' }}>
-            {message}
-        </p>
-        <style>{`
-            @keyframes pulse {
-                0%, 100% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.5); opacity: 0.7; }
-            }
-        `}</style>
-    </div>
-);
-
 
 // --- NEW DELETION LOADER: Spinner (Red Theme) ---
 const DeletionLoader = ({ message }) => (
@@ -452,72 +417,72 @@ const CourseCard = ({ course, onMarkComplete, onDelete, isActive }) => {
 };
 // --- END COURSE CARD COMPONENT ---
 
-const ToastNotification = ({ message, type, onDismiss }) => {
-    if (!message) return null;
+// const ToastNotification = ({ message, type, onDismiss }) => {
+//     if (!message) return null;
 
-    const isSuccess = type === 'success';
-    const isError = type === 'error';
-    // NEW TYPE: Used for successfully completing a destructive action (like deletion)
-    const isDeletionSuccess = type === 'deletion_success'; 
+//     const isSuccess = type === 'success';
+//     const isError = type === 'error';
+//     // NEW TYPE: Used for successfully completing a destructive action (like deletion)
+//     const isDeletionSuccess = type === 'deletion_success'; 
 
-    // Determine colors
-    let bgColor = isError ? '#dc2626' : '#16a34a'; // Default green, red for error
+//     // Determine colors
+//     let bgColor = isError ? '#dc2626' : '#16a34a'; // Default green, red for error
     
-    if (isDeletionSuccess) {
-        bgColor = '#b91c1c'; // Use a deep red for the deletion confirmation
-    } else if (isSuccess) {
-        bgColor = '#16a34a'; // Green for normal success
-    }
+//     if (isDeletionSuccess) {
+//         bgColor = '#b91c1c'; // Use a deep red for the deletion confirmation
+//     } else if (isSuccess) {
+//         bgColor = '#16a34a'; // Green for normal success
+//     }
 
-    // Determine icon
-    let icon = <AlertTriangle size={20} />;
+//     // Determine icon
+//     let icon = <AlertTriangle size={20} />;
     
-    if (isSuccess || isDeletionSuccess) {
-        icon = <CheckCircle size={20} />; // Checkmark for any successful action (Green or Red)
-    }
+//     if (isSuccess || isDeletionSuccess) {
+//         icon = <CheckCircle size={20} />; // Checkmark for any successful action (Green or Red)
+//     }
 
-    return (
-        <div 
-            style={{
-                position: 'fixed',
-                bottom: '24px',
-                right: '24px',
-                zIndex: 1000,
-                backgroundColor: bgColor,
-                color: 'white',
-                padding: '16px 20px',
-                borderRadius: '12px',
-                boxShadow: '0 6px 16px rgba(0, 0, 0, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                maxWidth: '350px',
-                animation: 'slideIn 0.3s ease-out',
-            }}
-        >
-            <style>{`
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `}</style>
-            {icon}
-            <span style={{ flexGrow: 1, fontWeight: '500', fontSize: '15px' }}>{message}</span>
-            <button
-                onClick={onDismiss}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'white',
-                    cursor: 'pointer',
-                    padding: '4px',
-                }}
-            >
-                <X size={16} />
-            </button>
-        </div>
-    );
-};
+//     return (
+//         <div 
+//             style={{
+//                 position: 'fixed',
+//                 bottom: '24px',
+//                 right: '24px',
+//                 zIndex: 1000,
+//                 backgroundColor: bgColor,
+//                 color: 'white',
+//                 padding: '16px 20px',
+//                 borderRadius: '12px',
+//                 boxShadow: '0 6px 16px rgba(0, 0, 0, 0.4)',
+//                 display: 'flex',
+//                 alignItems: 'center',
+//                 gap: '12px',
+//                 maxWidth: '350px',
+//                 animation: 'slideIn 0.3s ease-out',
+//             }}
+//         >
+//             <style>{`
+//                 @keyframes slideIn {
+//                     from { transform: translateX(100%); opacity: 0; }
+//                     to { transform: translateX(0); opacity: 1; }
+//                 }
+//             `}</style>
+//             {icon}
+//             <span style={{ flexGrow: 1, fontWeight: '500', fontSize: '15px' }}>{message}</span>
+//             <button
+//                 onClick={onDismiss}
+//                 style={{
+//                     background: 'none',
+//                     border: 'none',
+//                     color: 'white',
+//                     cursor: 'pointer',
+//                     padding: '4px',
+//                 }}
+//             >
+//                 <X size={16} />
+//             </button>
+//         </div>
+//     );
+// };
 
 // Main Dashboard Component
 export default function DashboardPage() {
@@ -534,16 +499,16 @@ export default function DashboardPage() {
 	const [courses, setCourses] = useState([]); 
 	const [error, setError] = useState(null);
 	const [courseToDelete, setCourseToDelete] = useState(null); 
-	const [toast, setToast] = useState({ message: null, type: null });
+	// const [toast, setToast] = useState({ message: null, type: null });
 	
 	const navigate = useNavigate();
 
-	const showToast = (message, type) => {
-		setToast({message, type});
-		setTimeout(() => {
-			setToast({ message: null, type: null });
-		}, 4000)
-	}
+	// const showToast = (message, type) => {
+	// 	setToast({message, type});
+	// 	setTimeout(() => {
+	// 		setToast({ message: null, type: null });
+	// 	}, 4000)
+	// }
 
 	/**
 	 * Filters courses into active and completed lists for rendering.
@@ -612,6 +577,19 @@ export default function DashboardPage() {
 		loadCourses();
 	}, [user]);
 
+	useEffect(() => {
+		const showToastFlag = localStorage.getItem('showWelcomeToast');
+		if (showToastFlag === 'true' && user){
+			const username = user.username;
+			toast.success(`Welcome back, ${username}! Let's generate a new plan.`, {
+                autoClose: 5000, 
+                icon: '👋',
+            });
+
+			localStorage.removeItem('showWelcomeToast')
+		}
+	}, [user]);
+
 	/**
 	 * Generates a new course plan based on the user prompt.
 	 */
@@ -665,7 +643,7 @@ export default function DashboardPage() {
 		// Update persistent storage with new status
 		saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
 
-		showToast(`Course "${completedCourse.title || 'Untitled'}" completed!`, 'success');
+		toast.success(`Course "${completedCourse.title || 'Untitled'}" completed!`, { icon: '🎉' });
 	};
 
 	/**
@@ -694,11 +672,10 @@ export default function DashboardPage() {
 				const newCourses = courses.filter(c => c.id !== courseId);
 				setCourses(newCourses);
 				saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
-				showToast(`Course "${courseTitle || 'Untitled'}" successfully deleted!`, 'deletion_success');
+				toast.error(`Course "${courseTitle || 'Untitled'}" successfully deleted!`, { icon: '🗑️' });
 			} else {
 				// Deletion Failed
 				setError(`Deletion Failed: ${data.message || 'Unknown error occurred.'}`);
-				showToast('Could not delete course!', 'error');
 			}
 		} catch (error) {
 			console.error('Error deleting course:', error);
@@ -730,12 +707,12 @@ export default function DashboardPage() {
 				/>
 			)}
 
-			<ToastNotification
+			{/* <ToastNotification
 				message={toast.message}
 				type={toast.type}
 				onDismiss={() => setToast({ message: null, type: null })}
 
-			/>
+			/> */}
 			{/* Content Wrapper to apply max-width, centering, and PADDING */}
 			<div style={styles.contentWrapper}>
 

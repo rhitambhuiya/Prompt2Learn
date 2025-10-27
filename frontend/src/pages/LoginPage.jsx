@@ -245,6 +245,12 @@ const LoginModal = ({ show, onClose }) => {
                  setError('Please confirm your password.');
                  return;
             }
+
+            if(password.length < 6){
+                setError('Password should be of minimum 6 characters.')
+                return;
+            }
+
             if (password !== confirmPassword) {
                 setError('Passwords do not match.');
                 return;
@@ -279,6 +285,7 @@ const LoginModal = ({ show, onClose }) => {
                 throw new Error(data.error || 'Request failed')
             }
             localStorage.setItem('p2l_user', JSON.stringify(data))
+            localStorage.setItem('showWelcomeToast', 'true')
             navigate('/')
         } catch (e) {
             // Note: Updated the VITE_API_URL fallback to 4000 to match the server file
