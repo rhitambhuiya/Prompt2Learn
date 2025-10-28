@@ -499,16 +499,8 @@ export default function DashboardPage() {
 	const [courses, setCourses] = useState([]); 
 	const [error, setError] = useState(null);
 	const [courseToDelete, setCourseToDelete] = useState(null); 
-	// const [toast, setToast] = useState({ message: null, type: null });
 	
 	const navigate = useNavigate();
-
-	// const showToast = (message, type) => {
-	// 	setToast({message, type});
-	// 	setTimeout(() => {
-	// 		setToast({ message: null, type: null });
-	// 	}, 4000)
-	// }
 
 	/**
 	 * Filters courses into active and completed lists for rendering.
@@ -581,7 +573,7 @@ export default function DashboardPage() {
 		const showToastFlag = localStorage.getItem('showWelcomeToast');
 		if (showToastFlag === 'true' && user){
 			const username = user.username;
-			toast.success(`Welcome back, ${username}! Let's generate a new plan.`, {
+			toast.info(`Welcome back, ${username}! Let's generate a new plan.`, {
                 autoClose: 5000, 
                 icon: '👋',
             });
@@ -707,12 +699,6 @@ export default function DashboardPage() {
 				/>
 			)}
 
-			{/* <ToastNotification
-				message={toast.message}
-				type={toast.type}
-				onDismiss={() => setToast({ message: null, type: null })}
-
-			/> */}
 			{/* Content Wrapper to apply max-width, centering, and PADDING */}
 			<div style={styles.contentWrapper}>
 
