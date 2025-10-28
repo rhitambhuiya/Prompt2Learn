@@ -518,7 +518,8 @@ export default function DashboardPage() {
 	const handleLogout = () => {
 		localStorage.removeItem('p2l_user');
 		navigate('/login');
-		toast.info("Successfully logged out!")
+		toast.dismiss();
+		toast.info("Successfully logged out!");
 	}
 
 	/**
