@@ -1,17 +1,9 @@
 // API Configuration
-const isDevelopment = import.meta.env.DEV;
-const isProduction = import.meta.env.PROD;
+const isDevelopment = import.meta.env.MODE === 'development';
 
-// API URLs
-const API_URLS = {
-  development: 'http://localhost:4000',
-  production: 'https://prompt2learn.onrender.com' // Your actual Render URL
-};
+export const API_URL=isDevelopment
+? import.meta.env.VITE_API_URL_DEV
+: import.meta.env.VITE_API_URL_PROD
 
-// Get the appropriate API URL
-export const API_URL = isDevelopment 
-  ? API_URLS.development 
-  : API_URLS.production;
-
-console.log('Environment:', isDevelopment ? 'Development' : 'Production');
-console.log('API URL:', API_URL);
+console.log('Environment:', import.meta.env.MODE);
+console.log('Using API URL:', API_URL);

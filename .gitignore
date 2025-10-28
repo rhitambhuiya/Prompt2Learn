@@ -3,6 +3,11 @@ node_modules/
 npm-debug.log*
 
 # Environment variables
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+
 .env
 .env.local
 .env.production
