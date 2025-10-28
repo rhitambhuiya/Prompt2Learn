@@ -518,6 +518,7 @@ export default function DashboardPage() {
 	const handleLogout = () => {
 		localStorage.removeItem('p2l_user');
 		navigate('/login');
+		toast.info("Successfully logged out!")
 	}
 
 	/**
@@ -574,7 +575,6 @@ export default function DashboardPage() {
 		if (showToastFlag === 'true' && user){
 			const username = user.username;
 			toast.info(`Welcome back, ${username}! Let's generate a new plan.`, {
-                autoClose: 5000, 
                 icon: '👋',
             });
 

@@ -45,8 +45,8 @@ export default function App() {
     <div>
       <ToastContainer
         position="top-right" // Set toast position to top-right
-        style={{ top: '70px' }}
-        autoClose={2500} // Default duration in milliseconds (5 seconds)
+        style={{ top: '65px' }}
+        autoClose={3000} // Default duration in milliseconds (5 seconds)
         hideProgressBar={false} // Show the timer slider (progress bar)
         newestOnTop={true} // Ensures new toasts appear above old ones
         closeOnClick
