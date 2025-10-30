@@ -151,8 +151,12 @@ const AppHeader = ({ user, onLogout }) => (
 );
 
 // Collapsible Lesson Component
-function CollapsibleLesson({ dayIndex, lessonIndex, title, description, isCompleted, onToggleComplete }) {
+function CollapsibleLesson({ courseId, dayIndex, lessonIndex, title, description, isCompleted, onToggleComplete, dayTitle }) {
     const [open, setOpen] = useState(false);
+    const [content, setContent] = useState(description || "");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [persisting, setPersisting] = useState(false); // for DB PATCH state
 
     const handleCheckboxChange = (e) => {
         e.stopPropagation(); 
@@ -162,6 +166,42 @@ function CollapsibleLesson({ dayIndex, lessonIndex, title, description, isComple
 
     const handleTileClick = (e) => {
         setOpen(!open); 
+    };
+
+    const handleGenerateMore = async (e) => {
+        e.stopPropagation();
+        setLoading(true);
+        setError(null);
+        try {
+            const resp = await fetch(`${API_URL}/api/lessons/generate-more-content`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dayTitle, lessonTitle: title, description: content })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.content) {
+                const newFullDesc = content + "\n\n" + data.content;
+                setContent(newFullDesc);
+                setPersisting(true);
+                // persist appended content to DB
+                const patchResp = await fetch(`${API_URL}/api/lessons/update-description`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ courseId, dayIndex, lessonIndex: lessonIndex + 1, newDescription: newFullDesc }) // lesson_index is 1-based in DB
+                });
+                if (!patchResp.ok) {
+                  const patchError = await patchResp.json();
+                  setError(patchError.error || 'Failed to save description to database.');
+                }
+            } else {
+                setError(data.error || "Failed to generate content.");
+            }
+        } catch (err) {
+            setError("Error contacting backend.");
+        } finally {
+            setLoading(false);
+            setPersisting(false);
+        }
     };
 
     return (
@@ -174,7 +214,7 @@ function CollapsibleLesson({ dayIndex, lessonIndex, title, description, isComple
                 padding: '0px',
                 cursor: 'pointer',
             }}
-            onClick={handleTileClick} 
+            onClick={handleTileClick}
             onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = sageGreen.secondary;
             }}
@@ -185,76 +225,60 @@ function CollapsibleLesson({ dayIndex, lessonIndex, title, description, isComple
             <div style={styles.lessonBorderProgress}>
                 <div style={styles.lessonProgressFill(isCompleted)}></div>
             </div>
-
-            <div 
-                style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '25px',
-                    paddingTop: '5px',
-                }}
-            >
-                <div 
-                    style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        flexGrow: 1, 
-                        textDecoration: isCompleted ? 'line-through' : 'none', 
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '25px',
+                paddingTop: '5px',
+            }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexGrow: 1,
+                        textDecoration: isCompleted ? 'line-through' : 'none',
                         fontWeight: 700,
-                        color: isCompleted ? '#9ca3af' : (open ? sageGreen.lightHover : '#eaf0ff'), 
+                        color: isCompleted ? '#9ca3af' : (open ? sageGreen.lightHover : '#eaf0ff'),
                         fontSize: '20px',
                     }}
                 >
-                    <div 
-                        onClick={handleCheckboxChange}
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            flexShrink: 0, 
-                            marginRight: '15px', 
-                            cursor: 'pointer',
-                        }}
-                    >
+                    <div onClick={handleCheckboxChange} style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: '15px', cursor: 'pointer' }}>
                         <input
                             type="checkbox"
                             checked={isCompleted}
-                            onChange={() => {}} 
-                            style={{
-                                width: '20px',
-                                height: '20px',
-                                accentColor: sageGreen.primary,
-                                pointerEvents: 'none', 
-                            }}
+                            onChange={() => { }}
+                            style={{ width: '20px', height: '20px', accentColor: sageGreen.primary, pointerEvents: 'none', }}
                         />
                     </div>
                     <span>{title}</span>
                 </div>
-                
-                <span 
-                    style={{ 
-                        fontSize: 24, 
-                        color: open ? sageGreen.primary : sageGreen.lightHover, 
-                        transition: 'transform 0.2s', 
-                        flexShrink: 0 
-                    }}
-                >
+                <span style={{ fontSize: 24, color: open ? sageGreen.primary : sageGreen.lightHover, transition: 'transform 0.2s', flexShrink: 0 }}>
                     {open ? '−' : '+'}
                 </span>
             </div>
-            
-            {open && description && (
-                <div
-                    style={{
-                        color: sageGreen.lightText,
-                        fontSize: '18px',
-                        marginTop: 0,
-                        padding: '0 25px 25px 25px',
-                        lineHeight: 1.6,
-                        textAlign: 'justify'
-                    }}
-                >
-                    {description}
+            {/* Show expanded content and button */}
+            {open && (
+                <div style={{ color: sageGreen.lightText, fontSize: '18px', marginTop: 0, padding: '0 25px 25px 25px', lineHeight: 1.6, textAlign: 'justify' }}>
+                    {content && <div style={{ whiteSpace: 'pre-line' }}>{content}</div>}
+                    <button 
+                        onClick={handleGenerateMore}
+                        disabled={loading}
+                        style={{
+                            marginTop: "18px",
+                            background: sageGreen.primary,
+                            color: "white",
+                            padding: "8px 18px",
+                            border: "none",
+                            borderRadius: "7px",
+                            fontWeight: 700,
+                            fontSize: "16px",
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? .6 : 1
+                        }}>
+                        {loading ? "Generating..." : "Generate More Content"}
+                    </button>
+                    {error && <div style={{ color: '#fe4444', marginTop: 9 }}>{error}</div>}
                 </div>
             )}
         </div>
@@ -574,12 +598,14 @@ export default function CoursePage() {
                                     {day.lessons.map((l, idx) => (
                                         <CollapsibleLesson
                                             key={idx}
+                                            courseId={course.id}
                                             dayIndex={dayIndex}
                                             lessonIndex={idx}
                                             title={l.title}
                                             description={l.description}
                                             isCompleted={isCourseFinalized || lessonStatus[`${dayIndex}-${idx}`] || false}
                                             onToggleComplete={handleToggleComplete}
+                                            dayTitle={day.dayTitle}
                                         />
                                     ))}
                                 </div>

@@ -324,6 +324,65 @@ app.get('/api/courses/:courseId', async (req, res) => {
   }
 });
 
+// --- GENERATE MORE LESSON CONTENT (AI GEMINI) ---
+app.post('/api/lessons/generate-more-content', async (req, res) => {
+  const { dayTitle, lessonTitle, description } = req.body || {};
+  if (!dayTitle || !lessonTitle || !description) {
+    return res.status(400).json({ error: 'dayTitle, lessonTitle, and description are required' });
+  }
+  try {
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const systemPrompt = `You are Prompt2Learn, an expert course designer. Given the lesson details, generate 1-2 new paragraphs to expand the given lesson description based on the dayTitle and lessonTitle. Be specific, in-depth, and avoid restating the prior content. Only write new, relevant educational material (no greetings or meta). Do NOT repeat or echo the input (day title, lesson title, or existing description). ONLY output the new extra content.`;
+    const userPrompt = `Day Title: ${dayTitle}\nLesson Title: ${lessonTitle}\nExisting Description: ${description}`;
+    const result = await model.generateContent([
+      { text: systemPrompt },
+      { text: userPrompt }
+    ]);
+    let text = result.response.text();
+    // Remove code fences and possible markdown
+    let newContent = text.replace(/^```[a-z]*\n?|\n?```$/gi, '').trim();
+    // Remove echoed prompt info or instructions
+    // Strip everything before/including 'Existing Description:' (if repeated)
+    const splitPattern = /Existing Description:(.*)/s;
+    const justGenerated = splitPattern.test(newContent)
+      ? newContent.replace(splitPattern, '').trim()
+      : newContent;
+    // Remove any lines with 'Day Title:', 'Lesson Title:', or 'Existing Description:'
+    const cleanedContent = justGenerated
+      .replace(/Day Title:.*/gi, '')
+      .replace(/Lesson Title:.*/gi, '')
+      .replace(/Existing Description:.*/gi, '')
+      .trim();
+    if (!cleanedContent) {
+      return res.status(502).json({ error: 'no useful generated content' });
+    }
+    return res.json({ content: cleanedContent });
+  } catch (e) {
+    return res.status(500).json({ error: 'failed to generate content', details: e.message });
+  }
+});
+
+// --- UPDATE LESSON DESCRIPTION (AFTER GENERATION) ---
+app.patch('/api/lessons/update-description', async (req, res) => {
+  const { courseId, dayIndex, lessonIndex, newDescription } = req.body || {};
+  if (!courseId || dayIndex == null || lessonIndex == null || typeof newDescription !== 'string') {
+    return res.status(400).json({ error: 'courseId, dayIndex, lessonIndex, newDescription required' });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE lessons SET lesson_description = $1 WHERE course_id = $2 AND day_index = $3 AND lesson_index = $4`,
+      [newDescription, courseId, dayIndex, lessonIndex]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Lesson not found.' });
+    }
+    return res.json({ success: true });
+  } catch (e) {
+    return res.status(500).json({ error: 'DB update failed', details: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Prompt2Learn backend running on http://localhost:${PORT}`);
