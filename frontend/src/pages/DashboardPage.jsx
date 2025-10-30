@@ -608,17 +608,24 @@ export default function DashboardPage() {
      * ADDED: Handles marking a course as active (Start Again).
      */
     const handleMarkActive = (courseId) => {
-        const restartedCourse = courses.find(c => c.id == courseId)
-        const newCourses = courses.map(c => 
-            c.id === courseId ? { ...c, status: 'active' } : c
-        );
-        setCourses(newCourses);
-        
-        // Update persistent storage with new status
-        saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
+    const restartedCourse = courses.find(c => c.id == courseId)
+    const newCourses = courses.map(c => 
+        c.id === courseId ? { ...c, status: 'active' } : c
+    );
+    setCourses(newCourses);
+    
+    // Update persistent storage with new status
+    saveCoursesToStorage(newCourses.map(c => ({ id: c.id, status: c.status })));
 
-        toast.info(`Course "${restartedCourse.title || 'Untitled'}" restarted!`, { icon: '🔄' });
-    };
+    // 🌟 CRITICAL FIX: Delete the lesson progress history.
+    const user = getUser(); // Assuming getUser() is defined in DashboardPage
+    if (user) {
+        localStorage.removeItem(`p2l_lesson_status_${user.id}_${courseId}`);
+    }
+    // 🌟 END CRITICAL FIX
+
+    toast.info(`Course "${restartedCourse.title || 'Untitled'}" restarted!`, { icon: '🔄' });
+};
 
     /**
      * Executes the course deletion after confirmation.
