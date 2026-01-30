@@ -1,7 +1,7 @@
 Prompt2Learn
 =============
 
-Full-stack app that generates 7-day AI study modules using Gemini and stores them in SQLite. Includes simple username/password login (no middleware), dashboard, and course viewer.
+Full-stack app that generates 7-day AI study modules using Gemini and stores them in Neon DB(PostgreSQL). Includes simple username/password login (no middleware), dashboard, and course viewer.
 
 Setup
 -----
